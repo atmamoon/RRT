@@ -52,16 +52,18 @@ def rrt(obstacles,start,goal,max_size,scale=1):
     nodes=[]
     edges=[]
     path=[]
-    dmin=0.01*scale
+    dmin=0.05*scale
     nodes.append(tree_rrt(start[0],start[1]))
     while tree_rrt.tree_size < max_size:
         x_sample=random.uniform(start[0]-0.2*scale,goal[0]+0.2*scale)
         y_sample=random.uniform(start[1]-0.2*scale,goal[1]+0.2*scale)
         sample=[x_sample,y_sample]
         edge=nearest_node(sample,nodes)
+        if edge[0]>(dmin*10):
+            continue
         #step=(nodes[int(edge[1]-1)].x-sample[0])/100)
-        local_x=[i for i in np.linspace(nodes[int(edge[1]-1)].x,sample[0],100)]
-        local_y=[i for i in np.linspace(nodes[int(edge[1]-1)].y,sample[1],100)]
+        local_x=[i for i in np.linspace(nodes[int(edge[1]-1)].x,sample[0],10)]
+        local_y=[i for i in np.linspace(nodes[int(edge[1]-1)].y,sample[1],10)]
         local=zip(local_x,local_y)
         if collision(local,obstacles):
             continue
@@ -69,8 +71,8 @@ def rrt(obstacles,start,goal,max_size,scale=1):
         nodes[int(tree_rrt.tree_size-1)].parent=edge[1]
         edges.append([edge[1],nodes[int(tree_rrt.tree_size-1)].index,edge[0]])
         if check_distance(goal,sample)<dmin:
-            local_x=[i for i in np.linspace(goal[0],sample[0],50)]
-            local_y=[i for i in np.linspace(goal[1],sample[1],50)]
+            local_x=[i for i in np.linspace(goal[0],sample[0],10)]
+            local_y=[i for i in np.linspace(goal[1],sample[1],10)]
             local=zip(local_x,local_y)
             if collision(local,obstacles):
                 continue
@@ -89,10 +91,10 @@ def rrt(obstacles,start,goal,max_size,scale=1):
 
 
 obstacle_list=np.genfromtxt("obstacles.csv",delimiter=',')
-scale=100
+scale=1
 start_node=[-0.5*scale,-0.5*scale]
 goal_node=[0.5*scale,0.5*scale]
-avenue=rrt(obstacle_list,start_node,goal_node,100*20,scale)
+avenue=rrt(obstacle_list,start_node,goal_node,10*20,scale)
 if len(avenue[0])==0:
     print("failure")
 else:
