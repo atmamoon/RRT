@@ -1,6 +1,10 @@
 import numpy as np
 import random
 
+import matplotlib.pyplot as plt
+import math
+
+
 nodes=[]
 class tree_rrt:
     tree_size=0
@@ -34,7 +38,7 @@ def collision(local,obstacles):
     collide=False
     for item in local:
         for object in obstacles:
-            if check_distance([item[0],item[1]],[object[0],object[1]])<object[2]:
+            if check_distance([item[0],item[1]],[object[0],object[1]])<(object[2])/2:
                 collide=True
                 return collide
     return collide
@@ -58,13 +62,14 @@ def check_distance(p1,p2):
 
 def rrt(obstacles,start,goal,max_size,scale=1):
     #nodes=[]
+    animation=False
     edges=[]
     path=[]
-    dmin=0.02*scale
+    dmin=0.05*scale
     nodes.append(tree_rrt(start[0],start[1]))
     while tree_rrt.tree_size < max_size:
-        x_sample=random.uniform(start[0]-0*scale,goal[0]+0.2*scale)
-        y_sample=random.uniform(start[1]-0*scale,goal[1]+0.2*scale)
+        x_sample=random.uniform(start[0]-0*scale,goal[0]+0.02*scale)
+        y_sample=random.uniform(start[1]-0*scale,goal[1]+0.02*scale)
         #x_sample=random.uniform(nodes[int(tree_rrt.tree_size-1)].x,goal[0]+0.1*scale)
         #y_sample=random.uniform(nodes[int(tree_rrt.tree_size-1)].y,goal[1]+0.1*scale)
         sample=[x_sample,y_sample]
@@ -81,6 +86,8 @@ def rrt(obstacles,start,goal,max_size,scale=1):
         nodes.append(tree_rrt(x_sample,y_sample))
         nodes[int(tree_rrt.tree_size-1)].parent=edge[1]
         edges.append([edge[1],nodes[int(tree_rrt.tree_size-1)].index,edge[0]])
+        if animation and tree_rrt.tree_size % 5 == 0:
+            draw_graph(edge,obstacles)
         if check_distance(goal,sample)<dmin:
             print("found something")
             local_x=[i for i in np.linspace(goal[0],sample[0],5)]
@@ -93,6 +100,8 @@ def rrt(obstacles,start,goal,max_size,scale=1):
             edges.append([nodes[int(tree_rrt.tree_size-2)].index,tree_rrt.tree_size-1,check_distance(goal,sample)])
             path=retrive_path()
             break
+        if animation and tree_rrt.tree_size % 5 == 0:
+            draw_graph(edge,obstacles)
 
     nodes1=[]
     #print(edges)
@@ -103,11 +112,41 @@ def rrt(obstacles,start,goal,max_size,scale=1):
 
 
 
+def plot_circle(x, y, size, color="-b"):  # pragma: no cover
+    size=size/2
+    deg = list(range(0, 360, 5))
+    deg.append(0)
+    xl = [x + size * math.cos(np.deg2rad(d)) for d in deg]
+    yl = [y + size * math.sin(np.deg2rad(d)) for d in deg]
+    plt.plot(xl, yl, color)
+
+def draw_graph(rnd,obstacle_list):
+    plt.clf()
+    # for stopping simulation with the esc key.
+    plt.gcf().canvas.mpl_connect('key_release_event',
+                                 lambda event: [exit(0) if event.key == 'escape' else None])
+    if rnd is not None:
+        plt.plot(rnd[0], rnd[1], "^k")
+    for node in nodes:
+        if node.parent:
+            plt.plot(node.x, node.y, "-g")
+
+    for (ox, oy, size) in obstacle_list:
+        plot_circle(ox, oy, size)
+
+    plt.plot(start_node[0],start_node[1], "xr")
+    plt.plot(goal_node[0],goal_node[1], "xr")
+    plt.axis("equal")
+    plt.axis([-0.5,0.6,-0.5,0.6])
+    plt.grid(True)
+    plt.pause(0.01)
+
+
 obstacle_list=np.genfromtxt("obstacles.csv",delimiter=',')
 scale=1
 start_node=[-0.5*scale,-0.5*scale]
 goal_node=[0.5*scale,0.5*scale]
-avenue=rrt(obstacle_list,start_node,goal_node,2000,scale)
+avenue=rrt(obstacle_list,start_node,goal_node,1000,scale)
 if len(avenue[0])==0:
     print("failure")
 else:
